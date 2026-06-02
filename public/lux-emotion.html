@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Lux Flux — Emotion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d0d0d;
+        --border: #1c1c1c;
+        --pill-border: #252525;
+        --muted: #8a8a8a;
+        --label: #6b6b6b;
+        --text: #ffffff;
+        --tab-active: #f5c842;
+        --serif: 'DM Serif Display', Georgia, serif;
+        --sans: 'DM Sans', system-ui, sans-serif;
+        --glow: #f5c842;
+        --transition: 0.5s ease;
+        --tab-bar-h: 72px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #000;
+        font-family: var(--sans);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 375px;
+        height: 812px;
+        max-height: 812px;
+        margin: 0 auto;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 12px 20px calc(var(--tab-bar-h) + 16px);
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* Top bar */
+      .top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .top__right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+      }
+
+      .oocsi-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .oocsi-status__dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #444;
+        flex-shrink: 0;
+        transition:
+          background 0.5s ease,
+          box-shadow 0.5s ease;
+      }
+
+      .oocsi-status--live .oocsi-status__dot {
+        background: #6bbf59;
+        box-shadow: 0 0 8px rgba(107, 191, 89, 0.85);
+      }
+
+      .oocsi-status__text {
+        font-size: 10px;
+        font-weight: 500;
+        color: #6bbf59;
+        letter-spacing: 0.04em;
+        text-transform: lowercase;
+        opacity: 0;
+        max-width: 0;
+        overflow: hidden;
+        transition: opacity 0.5s ease, max-width 0.5s ease;
+      }
+
+      .oocsi-status--live .oocsi-status__text {
+        opacity: 1;
+        max-width: 32px;
+      }
+
+      .top__label {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--label);
+      }
+
+      .top__date {
+        margin-top: 4px;
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .skip {
+        border: none;
+        background: none;
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15px;
+        font-weight: 400;
+        cursor: pointer;
+        padding: 2px 0;
+      }
+
+      .heading {
+        font-family: var(--serif);
+        font-size: 38px;
+        font-weight: 400;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+      }
+
+      .heading span,
+      .subtitle span {
+        display: block;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        line-height: 1.4;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      /* Avatar + glow */
+      .avatar-stage {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 18px 20px 6px;
+        margin: 0 -20px;
+      }
+
+      .avatar-glow {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: min(320px, 90vw);
+        height: min(320px, 90vw);
+        transform: translate(-50%, -52%);
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          color-mix(in srgb, var(--glow) 55%, transparent) 0%,
+          color-mix(in srgb, var(--glow) 28%, transparent) 35%,
+          transparent 68%
+        );
+        transition: background var(--transition);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .avatar-btn {
+        position: relative;
+        z-index: 1;
+        border: none;
+        background: none;
+        padding: 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform var(--transition);
+        transform: scale(var(--avatar-scale, 1));
+      }
+
+      .avatar-btn img {
+        display: block;
+        width: auto;
+        height: clamp(170px, 28vh, 220px);
+        max-width: 220px;
+        object-fit: contain;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+        transition: opacity 0.5s ease;
+      }
+
+      /* Emotion pills */
+      .pills-wrap {
+        margin: 6px -20px 14px;
+        padding: 0 20px;
+      }
+
+      .pills {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 4px 2px 8px;
+      }
+
+      .pills::-webkit-scrollbar {
+        display: none;
+      }
+
+      .pill {
+        flex: 0 0 auto;
+        scroll-snap-align: center;
+        padding: 12px 22px;
+        border-radius: 999px;
+        border: 1px solid var(--pill-border);
+        background: transparent;
+        color: var(--muted);
+        font-family: var(--sans);
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          background var(--transition),
+          border-color var(--transition),
+          color var(--transition),
+          transform 0.2s ease;
+      }
+
+      .pill:hover {
+        border-color: #3a3a3a;
+      }
+
+      .pill--active {
+        border-color: transparent;
+        color: #0d0d0d;
+        font-weight: 600;
+      }
+
+      .btn-next {
+        display: block;
+        width: 100%;
+        padding: 18px 24px;
+        border: none;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #0d0d0d;
+        font-family: var(--sans);
+        font-size: 17px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 8px;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      .btn-next:active {
+        transform: scale(0.98);
+        opacity: 0.92;
+      }
+
+      /* Tab bar — fixed to viewport bottom */
+      .tab-bar {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 375px;
+        z-index: 100;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: var(--bg);
+        border-top: 0.5px solid var(--border);
+        padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+      }
+
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-family: var(--sans);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        padding: 4px 0;
+        text-decoration: none;
+      }
+
+      .tab--active {
+        color: var(--tab-active);
+      }
+
+      .tab svg {
+        width: 24px;
+        height: 24px;
+      }
+    </style>
+  </head>
+  <body data-lux-page="emotion">
+    <div class="app">
+      <main class="main">
+        <div class="top">
+          <div>
+            <p class="top__label">Daily check-in</p>
+            <p class="top__date">May 26, 2026</p>
+          </div>
+          <div class="top__right">
+            <div class="oocsi-status" id="oocsiStatus" aria-live="polite">
+              <span class="oocsi-status__dot" aria-hidden="true"></span>
+              <span class="oocsi-status__text">live</span>
+            </div>
+            <button type="button" class="skip">Skip</button>
+          </div>
+        </div>
+
+        <h1 class="heading">
+          <span>How are you</span>
+          <span>feeling Now?</span>
+        </h1>
+        <p class="subtitle">
+          <span>Swipe to find your mood, or</span>
+          <span>twist the avatar to share it</span>
+        </p>
+
+        <section class="avatar-stage" aria-label="Current mood">
+          <div class="avatar-glow" id="glow" aria-hidden="true"></div>
+          <button type="button" class="avatar-btn" id="avatarBtn" aria-label="Cycle mood">
+            <img id="avatar" src="/emotions/Group_48096386.png" alt="" />
+          </button>
+        </section>
+
+        <div class="pills-wrap">
+          <div class="pills" id="pills" role="tablist" aria-label="Emotions"></div>
+        </div>
+
+        <button type="button" class="btn-next" id="btnNext">Next</button>
+      </main>
+    </div>
+
+    <nav class="tab-bar" aria-label="Main">
+        <a class="tab" href="/lux-dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path
+              d="M5 10.5 12 4l7 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5H10.5V20H6a1 1 0 0 1-1-1v-8.5z"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Home
+        </a>
+        <a class="tab" href="/conversation-history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path
+              d="M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 4v-4H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Conversation
+        </a>
+        <span class="tab tab--active" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+            />
+          </svg>
+          Emotion
+        </span>
+        <a class="tab" href="/profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M5 20c0-4 3.5-6 7-6s7 2 7 6" stroke-linecap="round" />
+          </svg>
+          Profile
+        </a>
+      </nav>
+
+    <script src="/js/lux-oocsi.js"></script>
+    <script src="/js/lux-oocsi-ui.js"></script>
+    <script>
+      const EMOTION_LIST = ['joyful', 'angry', 'stressful', 'relaxed', 'upset']
+      const pillsEl = document.getElementById('pills')
+      const avatarBtn = document.getElementById('avatarBtn')
+
+      EMOTION_LIST.forEach((id, index) => {
+        const config = LuxOOCSI.EMOTIONS[id]
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'pill' + (index === 0 ? ' pill--active' : '')
+        btn.textContent = config.label
+        btn.setAttribute('role', 'tab')
+        btn.dataset.index = String(index)
+        btn.addEventListener('click', () => LuxEmotionScreen.setEmotion(index))
+        pillsEl.appendChild(btn)
+      })
+
+      avatarBtn.addEventListener('click', () => {
+        LuxEmotionScreen.setEmotion(LuxEmotionScreen.getActiveIndex() + 1)
+      })
+
+      document.getElementById('btnNext').addEventListener('click', () => {
+        const id = EMOTION_LIST[LuxEmotionScreen.getActiveIndex()]
+        window.location.href = `/lux-emotion-intensity.html?emotion=${id}`
+      })
+
+      document.querySelector('.skip').addEventListener('click', () => {
+        window.location.href = '/lux-emotion-analysis.html'
+      })
+
+      document.addEventListener('keydown', (e) => {
+        const idx = LuxEmotionScreen.getActiveIndex()
+        if (e.key === 'ArrowRight') LuxEmotionScreen.setEmotion(idx + 1)
+        if (e.key === 'ArrowLeft') LuxEmotionScreen.setEmotion(idx - 1)
+        if (e.key === 'ArrowUp') {
+          const s = LuxOOCSI.getState()
+          LuxOOCSI.updateEmotion(s.emotion, Math.min(100, s.intensity + 5))
+        }
+        if (e.key === 'ArrowDown') {
+          const s = LuxOOCSI.getState()
+          LuxOOCSI.updateEmotion(s.emotion, Math.max(0, s.intensity - 5))
+        }
+      })
+
+      LuxOOCSIUI.bindConnectionStatus(document.getElementById('oocsiStatus'))
+      LuxOOCSIUI.bindEmotionScreen()
+    </script>
+  </body>
+</html>

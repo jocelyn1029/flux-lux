@@ -1,0 +1,109 @@
+/* Figma frame: 393 × 852 — group art is 786×852 (@2x) */
+.home-screen {
+  position: relative;
+  width: min(375px, 100vw);
+  height: 812px;
+  max-height: 812px;
+  margin: 0 auto;
+  background: #0d0d0d;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.home-screen__top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 90px 40px 0;
+}
+
+.home-screen__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  max-width: 266px;
+  color: #fff;
+  font-family: 'Playfair Display', 'Georgia', 'Times New Roman', serif;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.home-screen__title span {
+  display: block;
+}
+
+.home-screen__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 251px;
+  max-width: calc(100vw - 80px);
+  height: 60px;
+  margin-top: 35px;
+  padding: 0 7px 0 67px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-screen__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.12);
+}
+
+.home-screen__cta:active {
+  transform: translateY(0);
+}
+
+.home-screen__cta-label {
+  color: #000;
+  font-family:
+    'SF Pro Text',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.home-screen__cta-icon {
+  display: grid;
+  place-items: center;
+  width: 47px;
+  height: 47px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* Single group export — pinned to bottom, full frame width */
+.home-screen__characters {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (max-height: 740px) {
+  .home-screen__top {
+    padding-top: 56px;
+  }
+
+  .home-screen__title {
+    font-size: 32px;
+  }
+}

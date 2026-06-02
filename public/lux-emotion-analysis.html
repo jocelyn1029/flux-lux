@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Lux Flux — Emotion Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d0d0d;
+        --card: #1a1a1a;
+        --border: #252525;
+        --text: #ffffff;
+        --muted: #8a8a8a;
+        --label: #6b6b6b;
+        --yellow: #f5c842;
+        --orange: #e87d3e;
+        --green: #6bbf59;
+        --red: #e54d2e;
+        --blue: #70b1e8;
+        --serif: 'DM Serif Display', Georgia, serif;
+        --sans: 'DM Sans', system-ui, sans-serif;
+        --tab-bar-h: 72px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #000;
+        font-family: var(--sans);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+        min-height: 100dvh;
+        display: flex;
+        justify-content: center;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 375px;
+        height: 812px;
+        max-height: 812px;
+        margin: 0 auto;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-width: 100%;
+        padding: 52px 20px calc(var(--tab-bar-h) + 20px);
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 28px;
+      }
+
+      .header__label {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--label);
+      }
+
+      .header__date {
+        margin-top: 4px;
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .header__add {
+        border: none;
+        background: none;
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 2px 0;
+      }
+
+      .section {
+        margin-bottom: 28px;
+      }
+
+      .section-label {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--label);
+        margin-bottom: 10px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 0.5px solid var(--border);
+        border-radius: 20px;
+        padding: 16px;
+      }
+
+      /* Weekly emotion */
+      .card--weekly {
+        padding: 14px 16px 16px;
+        overflow: hidden;
+      }
+
+      .weekly-grid {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 100%;
+        gap: 0;
+      }
+
+      .weekly-day {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .weekly-day img {
+        width: 36px;
+        height: 36px;
+        max-width: 100%;
+        border-radius: 50%;
+        display: block;
+        object-fit: cover;
+        flex-shrink: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .weekly-day span {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: capitalize;
+        white-space: nowrap;
+      }
+
+      /* Timeline legend */
+      .timeline-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        margin-bottom: 10px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .legend-item__line {
+        width: 22px;
+        height: 0;
+        border-top: 2px solid #fff;
+      }
+
+      .legend-item__line--dotted {
+        border-top-style: dotted;
+      }
+
+      .legend-item__line--dashed {
+        border-top-style: dashed;
+      }
+
+      .legend-item__line--dashdot {
+        border-top: 2px dashed #6e6e6e;
+        border-top-style: none;
+        background: repeating-linear-gradient(
+          90deg,
+          #6e6e6e 0,
+          #6e6e6e 6px,
+          transparent 6px,
+          transparent 9px,
+          #6e6e6e 9px,
+          #6e6e6e 11px,
+          transparent 11px,
+          transparent 14px
+        );
+        height: 2px;
+      }
+
+      .legend-item--theo {
+        color: #6e6e6e;
+      }
+
+      /* Chart — full graphic from user asset (includes axes) */
+      .chart-card {
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .chart-img {
+        display: block;
+        width: 100%;
+        height: auto;
+        vertical-align: top;
+      }
+
+      /* Trend cards — accent bar on outer left edge */
+      .trend-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .trend-card {
+        display: flex;
+        align-items: stretch;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .trend-card__bar {
+        flex: 0 0 3px;
+        width: 3px;
+        border-radius: 20px 0 0 20px;
+      }
+
+      .trend-card__bar--orange {
+        background: var(--orange);
+      }
+
+      .trend-card__bar--green {
+        background: var(--green);
+      }
+
+      .trend-card__bar--yellow {
+        background: var(--yellow);
+      }
+
+      .trend-card__inner {
+        flex: 1;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 14px 14px 12px;
+      }
+
+      .trend-card__face {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .trend-card__body {
+        min-width: 0;
+      }
+
+      .trend-card__title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.3;
+        margin-bottom: 4px;
+      }
+
+      .trend-card__meta {
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+
+      .trend-card__meta--orange {
+        color: var(--orange);
+      }
+
+      .trend-card__meta--green {
+        color: var(--green);
+      }
+
+      .trend-card__photo {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Tab bar — fixed to viewport bottom */
+      .tab-bar {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 375px;
+        z-index: 100;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: var(--bg);
+        border-top: 0.5px solid #1c1c1c;
+        padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+      }
+
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--sans);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        padding: 4px 0;
+        text-decoration: none;
+        border: none;
+        background: none;
+        cursor: pointer;
+      }
+
+      .tab--active {
+        color: var(--yellow);
+      }
+
+      .tab svg {
+        width: 24px;
+        height: 24px;
+      }
+
+    </style>
+  </head>
+  <body data-lux-page="analysis">
+    <div class="app">
+      <main class="scroll">
+        <header class="header">
+          <div>
+            <p class="header__label">Daily check-in</p>
+            <p class="header__date">May 26, 2026</p>
+          </div>
+          <button type="button" class="header__add">Add</button>
+        </header>
+
+        <section class="section" aria-labelledby="weekly-label">
+          <h2 class="section-label" id="weekly-label">Weekly emotion</h2>
+          <div class="card card--weekly">
+            <div class="weekly-grid">
+              <div class="weekly-day">
+                <img src="/emotions/Group_48096381.png" alt="Joyful" width="36" height="36" />
+                <span>Mon</span>
+              </div>
+              <div class="weekly-day">
+                <img src="/emotions/Group_48096384.png" alt="Stressful" width="36" height="36" />
+                <span>Tue</span>
+              </div>
+              <div class="weekly-day">
+                <img src="/emotions/Group_48096381.png" alt="Joyful" width="36" height="36" />
+                <span>Wed</span>
+              </div>
+              <div class="weekly-day">
+                <img src="/emotions/Group_48096381.png" alt="Joyful" width="36" height="36" />
+                <span>Thu</span>
+              </div>
+              <div class="weekly-day">
+                <img src="/emotions/Group_48096382.png" alt="Angry" width="36" height="36" />
+                <span>Fri</span>
+              </div>
+              <div class="weekly-day">
+                <img src="/emotions/Group_48096383.png" alt="Upset" width="36" height="36" />
+                <span>Sat</span>
+              </div>
+              <div class="weekly-day">
+                <img src="/emotions/Group_48096385.png" alt="Relaxed" width="36" height="36" />
+                <span>Sun</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="timeline-label">
+          <h2 class="section-label" id="timeline-label">Family emotion timeline</h2>
+          <div class="timeline-legend" aria-hidden="true">
+            <div class="legend-item">
+              <span class="legend-item__line"></span>
+              Ernst
+            </div>
+            <div class="legend-item">
+              <span class="legend-item__line legend-item__line--dotted"></span>
+              Helen
+            </div>
+            <div class="legend-item">
+              <span class="legend-item__line legend-item__line--dashed"></span>
+              Sophie
+            </div>
+            <div class="legend-item legend-item--theo">
+              <span class="legend-item__line legend-item__line--dashdot"></span>
+              Theo
+            </div>
+          </div>
+          <div class="card chart-card">
+            <img
+              class="chart-img"
+              src="/emotion-timeline-chart.png"
+              alt="Family emotion timeline: Joyful, Relax, Stress, Angry, Sad from 06:00 to 24:00"
+              width="684"
+              height="328"
+            />
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="trends-label">
+          <h2 class="section-label" id="trends-label">Family emotion trends</h2>
+          <div class="trend-list">
+            <article class="card trend-card">
+              <span class="trend-card__bar trend-card__bar--orange" aria-hidden="true"></span>
+              <div class="trend-card__inner">
+                <img
+                  class="trend-card__face"
+                  src="/emotions/Group_48096384.png"
+                  alt=""
+                  width="44"
+                  height="44"
+                />
+                <div class="trend-card__body">
+                  <h3 class="trend-card__title">Theo — Stressful</h3>
+                  <p class="trend-card__meta trend-card__meta--orange">↓ Lower than usual</p>
+                </div>
+                <img
+                  class="trend-card__photo"
+                  src="/photo-theo.png"
+                  alt="Theo"
+                  width="52"
+                  height="52"
+                />
+              </div>
+            </article>
+
+            <article class="card trend-card">
+              <span class="trend-card__bar trend-card__bar--green" aria-hidden="true"></span>
+              <div class="trend-card__inner">
+                <img
+                  class="trend-card__face"
+                  src="/emotions/Group_48096385.png"
+                  alt=""
+                  width="44"
+                  height="44"
+                />
+                <div class="trend-card__body">
+                  <h3 class="trend-card__title">Helen — Relax</h3>
+                  <p class="trend-card__meta trend-card__meta--green">↑ Better than yesterday</p>
+                </div>
+                <img
+                  class="trend-card__photo"
+                  src="/photo-helen.png"
+                  alt="Helen"
+                  width="52"
+                  height="52"
+                />
+              </div>
+            </article>
+
+            <article class="card trend-card">
+              <span class="trend-card__bar trend-card__bar--yellow" aria-hidden="true"></span>
+              <div class="trend-card__inner">
+                <img
+                  class="trend-card__face"
+                  src="/emotions/Group_48096381.png"
+                  alt=""
+                  width="44"
+                  height="44"
+                />
+                <div class="trend-card__body">
+                  <h3 class="trend-card__title">Ernst — Joyful</h3>
+                  <p class="trend-card__meta trend-card__meta--green">↑ Better than yesterday</p>
+                </div>
+                <img
+                  class="trend-card__photo"
+                  src="/photo-ernst.png"
+                  alt="Ernst"
+                  width="52"
+                  height="52"
+                />
+              </div>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <nav class="tab-bar" aria-label="Main">
+        <a class="tab" href="/lux-dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path
+              d="M5 10.5 12 4l7 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5H10.5V20H6a1 1 0 0 1-1-1v-8.5z"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Home
+        </a>
+        <a class="tab" href="/conversation-history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path
+              d="M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 4v-4H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Conversation
+        </a>
+        <span class="tab tab--active" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+            />
+          </svg>
+          Emotion
+        </span>
+        <a class="tab" href="/profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M5 20c0-4 3.5-6 7-6s7 2 7 6" stroke-linecap="round" />
+          </svg>
+          Profile
+        </a>
+      </nav>
+
+    <script src="/js/lux-oocsi.js"></script>
+    <script src="/js/lux-oocsi-ui.js"></script>
+    <script>
+      document.querySelector('.header__add').addEventListener('click', () => {
+        const { emotion } = LuxOOCSI.getState()
+        LuxOOCSI.updateEmotion(emotion, 0)
+        window.location.href = '/lux-emotion.html'
+      })
+    </script>
+  </body>
+</html>

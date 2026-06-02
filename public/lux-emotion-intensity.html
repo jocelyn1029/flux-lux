@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Lux Flux — Intensity</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0d0d0d;
+        --border: #1c1c1c;
+        --muted: #8a8a8a;
+        --label: #6b6b6b;
+        --text: #ffffff;
+        --tab-active: #f5c842;
+        --serif: 'DM Serif Display', Georgia, serif;
+        --sans: 'DM Sans', system-ui, sans-serif;
+        --emotion: #f5c842;
+        --emotion-light: #ffe48a;
+        --outer-size: 240px;
+        --transition: 0.35s ease;
+        --tab-bar-h: 72px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #000;
+        font-family: var(--sans);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        touch-action: manipulation;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 375px;
+        height: 812px;
+        max-height: 812px;
+        margin: 0 auto;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 12px 20px calc(var(--tab-bar-h) + 16px);
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .top__label {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--label);
+      }
+
+      .top__date {
+        margin-top: 4px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .skip {
+        border: none;
+        background: none;
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15px;
+        cursor: pointer;
+        padding: 2px 0;
+      }
+
+      .heading {
+        font-family: var(--serif);
+        font-size: 38px;
+        font-weight: 400;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+      }
+
+      .heading span {
+        display: block;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        line-height: 1.4;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .circle-stage {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 -20px;
+        padding: 10px 20px;
+      }
+
+      .circle-glow {
+        position: absolute;
+        left: 50%;
+        top: 44%;
+        width: min(340px, 95vw);
+        height: min(340px, 95vw);
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          color-mix(in srgb, var(--emotion) calc(var(--glow-strength) * 55%), transparent) 0%,
+          color-mix(in srgb, var(--emotion) calc(var(--glow-strength) * 30%), transparent) 40%,
+          transparent 70%
+        );
+        transition: background var(--transition);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .circle-outer {
+        position: relative;
+        z-index: 1;
+        width: min(var(--outer-size), 230px);
+        height: min(var(--outer-size), 230px);
+        border-radius: 50%;
+        border: none;
+        padding: 0;
+        background: var(--emotion);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        transition:
+          background var(--transition),
+          filter var(--transition);
+      }
+
+      .circle-outer:active {
+        filter: brightness(1.03);
+      }
+
+      .circle-inner {
+        width: var(--inner-size, 48px);
+        height: var(--inner-size, 48px);
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--emotion-light) 55%, #ffffff);
+        transition:
+          width var(--transition),
+          height var(--transition),
+          background var(--transition);
+        pointer-events: none;
+      }
+
+      .circle-glow {
+        transition: background var(--transition);
+      }
+
+      .intensity-label {
+        transition: opacity 0.5s ease;
+      }
+
+      .intensity-block {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .intensity-label {
+        font-family: var(--serif);
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 1.2;
+        text-align: center;
+        color: var(--text);
+      }
+
+      .btn-reset {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: transparent;
+        color: #ffffff;
+        cursor: pointer;
+        transition: opacity 0.2s ease, transform 0.15s ease;
+      }
+
+      .btn-reset:hover {
+        opacity: 0.85;
+      }
+
+      .btn-reset:active {
+        transform: scale(0.94);
+        opacity: 0.7;
+      }
+
+      .btn-reset svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .btn-save {
+        display: block;
+        width: 100%;
+        padding: 18px 24px;
+        margin-bottom: 8px;
+        border: none;
+        border-radius: 999px;
+        background: #ffffff;
+        color: #0d0d0d;
+        font-family: var(--sans);
+        font-size: 17px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      .btn-save:active {
+        transform: scale(0.98);
+        opacity: 0.92;
+      }
+
+      .tab-bar {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        max-width: 375px;
+        z-index: 100;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        background: var(--bg);
+        border-top: 0.5px solid var(--border);
+        padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+      }
+
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--sans);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        padding: 4px 0;
+        text-decoration: none;
+      }
+
+      .tab--active {
+        color: var(--tab-active);
+      }
+
+      .tab svg {
+        width: 24px;
+        height: 24px;
+      }
+    </style>
+  </head>
+  <body data-lux-page="intensity">
+    <div class="app">
+      <main class="main">
+        <div class="top">
+          <div>
+            <p class="top__label">Daily check-in</p>
+            <p class="top__date">May 26, 2026</p>
+          </div>
+          <button type="button" class="skip">Skip</button>
+        </div>
+
+        <h1 class="heading">
+          <span>How are you</span>
+          <span>feeling Now?</span>
+        </h1>
+        <p class="subtitle" id="subtitle">Press as hard as you feel joyful</p>
+
+        <section class="circle-stage" aria-label="Set intensity">
+          <div class="circle-glow" id="glow" aria-hidden="true"></div>
+          <button
+            type="button"
+            class="circle-outer"
+            id="circleBtn"
+            aria-label="Press and hold to set intensity"
+          >
+            <span class="circle-inner" id="circleInner" aria-hidden="true"></span>
+          </button>
+          <div class="intensity-block">
+            <p class="intensity-label" id="intensityLabel">Intensity: 0</p>
+            <button type="button" class="btn-reset" id="resetBtn" aria-label="Reset intensity to zero">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path
+                  d="M5 11.2a7 7 0 0 1 11.95-4.95L19 4.8v5.2h-5.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M19 12.8a7 7 0 0 1-11.95 4.95L5 19.2v-5.2h5.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <button type="button" class="btn-save" id="saveBtn">save emotion</button>
+      </main>
+    </div>
+
+    <nav class="tab-bar" aria-label="Main">
+        <a class="tab" href="/lux-dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path
+              d="M5 10.5 12 4l7 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5H10.5V20H6a1 1 0 0 1-1-1v-8.5z"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Home
+        </a>
+        <a class="tab" href="/conversation-history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path
+              d="M5 6h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-4 4v-4H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Conversation
+        </a>
+        <span class="tab tab--active" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+            />
+          </svg>
+          Emotion
+        </span>
+        <a class="tab" href="/profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M5 20c0-4 3.5-6 7-6s7 2 7 6" stroke-linecap="round" />
+          </svg>
+          Profile
+        </a>
+      </nav>
+
+    <script src="/js/lux-oocsi.js"></script>
+    <script src="/js/lux-oocsi-ui.js"></script>
+    <script>
+      const circleBtn = document.getElementById('circleBtn')
+      const resetBtn = document.getElementById('resetBtn')
+      const saveBtn = document.getElementById('saveBtn')
+      let tickTimer = null
+
+      function startHold() {
+        if (tickTimer) return
+        tickTimer = setInterval(() => {
+          const current = LuxIntensityScreen.getIntensity()
+          if (current >= 100) {
+            stopHold()
+            return
+          }
+          LuxOOCSI.updateEmotion(
+            LuxIntensityScreen.getEmotionId(),
+            Math.min(100, current + 2)
+          )
+        }, 50)
+      }
+
+      function stopHold() {
+        if (tickTimer) {
+          clearInterval(tickTimer)
+          tickTimer = null
+        }
+      }
+
+      circleBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault()
+        startHold()
+      })
+      circleBtn.addEventListener('mouseup', stopHold)
+      circleBtn.addEventListener('mouseleave', stopHold)
+
+      circleBtn.addEventListener(
+        'touchstart',
+        (e) => {
+          e.preventDefault()
+          startHold()
+        },
+        { passive: false }
+      )
+      circleBtn.addEventListener('touchend', stopHold)
+      circleBtn.addEventListener('touchcancel', stopHold)
+
+      resetBtn.addEventListener('click', () => {
+        stopHold()
+        LuxOOCSI.updateEmotion(LuxIntensityScreen.getEmotionId(), 0)
+      })
+
+      saveBtn.addEventListener('click', () => {
+        window.location.href = '/lux-emotion-analysis.html'
+      })
+
+      document.querySelector('.skip').addEventListener('click', () => {
+        window.location.href = '/lux-emotion-analysis.html'
+      })
+    </script>
+  </body>
+</html>
