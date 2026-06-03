@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './HomeScreen.css'
 
 function ArrowIcon() {
@@ -14,7 +15,23 @@ function ArrowIcon() {
   )
 }
 
+function readStoredAvatar(): number | null {
+  const v = sessionStorage.getItem('luxSelectedAvatar')
+  if (v === '1') return 1
+  if (v === '3') return 3
+  return null
+}
+
 export function HomeScreen() {
+  const [selectedAvatar, setSelectedAvatar] = useState<number | null>(readStoredAvatar)
+  const showAvatarModal = selectedAvatar == null
+
+  function chooseAvatar(avatar: 1 | 3) {
+    sessionStorage.setItem('luxSelectedAvatar', String(avatar))
+    setSelectedAvatar(avatar)
+    window.dispatchEvent(new CustomEvent('luxAvatarChange', { detail: { avatar } }))
+  }
+
   return (
     <div className="home-screen">
       <div className="home-screen__top">
@@ -46,6 +63,24 @@ export function HomeScreen() {
         height={852}
         draggable={false}
       />
+
+      {showAvatarModal ? (
+        <div className="avatar-modal" role="dialog" aria-modal="true" aria-labelledby="coverAvatarTitle">
+          <div className="avatar-modal__card">
+            <h2 id="coverAvatarTitle" className="avatar-modal__title">
+              Which avatar are you?
+            </h2>
+            <div className="avatar-modal__actions">
+              <button type="button" className="avatar-modal__btn" onClick={() => chooseAvatar(1)}>
+                Avatar 1
+              </button>
+              <button type="button" className="avatar-modal__btn" onClick={() => chooseAvatar(3)}>
+                Avatar 3
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

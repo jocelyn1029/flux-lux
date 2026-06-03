@@ -73,12 +73,25 @@
   let connected = false
   let reconnectTimer = null
 
+  let holdActive = false
+
+  let selectedAvatar = (() => {
+    const v = sessionStorage.getItem('luxSelectedAvatar')
+    if (v === '1') return 1
+    if (v === '3') return 3
+    return null
+  })()
+
+  let liveIntensity = (() => {
+    const v = parseFloat(sessionStorage.getItem('luxIntensity') || '0')
+    return Number.isFinite(v) ? v : 0
+  })()
+
   function getState() {
     const emotion = sessionStorage.getItem('luxEmotion') || 'joyful'
-    const intensity = parseInt(sessionStorage.getItem('luxIntensity') || '0', 10)
     return {
       emotion,
-      intensity: Number.isFinite(intensity) ? intensity : 0,
+      intensity: liveIntensity,
       config: EMOTIONS[emotion] || EMOTIONS.joyful,
       connected,
     }
@@ -106,12 +119,32 @@
     )
   }
 
+  function setHoldActive(active) {
+    holdActive = !!active
+  }
+
+  function setSelectedAvatar(avatar) {
+    if (avatar !== 1 && avatar !== 3) return
+    selectedAvatar = avatar
+    sessionStorage.setItem('luxSelectedAvatar', String(avatar))
+    global.dispatchEvent(new CustomEvent('luxAvatarChange', { detail: { avatar } }))
+  }
+
+  function getSelectedAvatar() {
+    return selectedAvatar
+  }
+
+  function publishEmotion(emotion) {
+    if (!EMOTIONS[emotion]) return
+    sessionStorage.setItem('luxEmotion', emotion)
+    sessionStorage.setItem('luxIntensity', String(Math.round(liveIntensity)))
+    notify()
+  }
+
   function updateEmotion(emotion, intensity) {
     if (!EMOTIONS[emotion]) return
-    const clamped = Math.max(0, Math.min(100, Math.round(intensity)))
-    sessionStorage.setItem('luxEmotion', emotion)
-    sessionStorage.setItem('luxIntensity', String(clamped))
-    notify()
+    liveIntensity = Math.max(0, Math.min(100, intensity))
+    publishEmotion(emotion)
   }
 
   /** Map |count| to emotion (blue→upset … red→angry). */
@@ -124,11 +157,108 @@
     return 'angry' // red
   }
 
+  function lockEmotionFromUser(emotionId) {
+    if (!EMOTIONS[emotionId]) return
+    sessionStorage.setItem('luxEmotionLocked', emotionId)
+    updateEmotion(emotionId, getState().intensity)
+  }
+
+  function getLockedEmotion() {
+    const locked = sessionStorage.getItem('luxEmotionLocked')
+    return locked && EMOTIONS[locked] ? locked : null
+  }
+
+  function clearEmotionLock() {
+    sessionStorage.removeItem('luxEmotionLocked')
+  }
+
+  let pressStartTime = null
+  let heldIntensity = 1
+  const CLIMB_DURATION = 3000 // ms to go from 0 to 100, adjust to taste
+  let climbRaf = null
+  let climbEmotion = 'joyful'
+  let climbGeneration = 0
+
+  function stopSensorClimb() {
+    if (climbRaf == null && pressStartTime === null) return
+    console.log('stopSensorClimb called')
+    climbGeneration++
+    pressStartTime = null
+    if (climbRaf != null) {
+      cancelAnimationFrame(climbRaf)
+      climbRaf = null
+    }
+  }
+
+  function stepSensorClimb() {
+    climbRaf = null
+    if (pressStartTime === null || holdActive) return
+
+    const generation = climbGeneration
+    const elapsed = Date.now() - pressStartTime
+    heldIntensity = Math.min(100, Math.max(1, Math.round((elapsed / CLIMB_DURATION) * 100)))
+    updateEmotion(climbEmotion, heldIntensity)
+
+    if (heldIntensity < 100 && pressStartTime !== null && generation === climbGeneration) {
+      climbRaf = requestAnimationFrame(stepSensorClimb)
+    }
+  }
+
+  function startSensorClimb(emotion) {
+    climbEmotion = emotion
+    if (climbRaf != null) return
+    climbRaf = requestAnimationFrame(stepSensorClimb)
+  }
+
   function handleOOCSI(data) {
-    if (!data || data.count === undefined) return
-    const emotion = emotionFromCount(data.count)
+    console.log('incoming data.Number:', data?.Number, 'selectedAvatar:', selectedAvatar)
+    console.log('full data:', JSON.stringify(data))
+    if (!data) return
+    if (data.Number !== undefined && data.Number !== selectedAvatar) return
+
+    if (holdActive) {
+      console.log('handleOOCSI blocked, holdActive:', holdActive)
+      return
+    }
+
     const raw = data.strenth != null ? data.strenth : data.strength
-    const intensity = raw != null ? Math.round((Number(raw) / 1023) * 100) : getState().intensity
+    console.log('raw sensor value:', raw)
+    const hasIntensity = raw != null
+
+    const PRESS_THRESHOLD = 900
+    const isPressed = hasIntensity && Number(raw) > PRESS_THRESHOLD
+
+    if (!isPressed) {
+      stopSensorClimb()
+    }
+
+    const locked = getLockedEmotion()
+
+    let emotion = locked
+    if (!emotion) {
+      if (data.count !== undefined) {
+        emotion = emotionFromCount(data.count)
+      }
+    }
+
+    if (!emotion && !hasIntensity) return
+
+    const current = getState()
+    if (!emotion) emotion = current.emotion
+
+    if (isPressed) {
+      if (pressStartTime === null) {
+        pressStartTime = Date.now()
+      }
+      const elapsed = Date.now() - pressStartTime
+      heldIntensity = Math.min(100, Math.max(1, Math.round((elapsed / CLIMB_DURATION) * 100)))
+      startSensorClimb(emotion)
+    }
+    // on release, stopSensorClimb already ran above; heldIntensity stays as-is
+
+    const intensity = hasIntensity ? heldIntensity : getState().intensity
+
+    console.log('calling updateEmotion:', emotion, intensity)
     updateEmotion(emotion, intensity)
   }
 
@@ -164,7 +294,12 @@
       try {
         const msg = JSON.parse(event.data)
         const data = msg.data || msg
-        if (data.count !== undefined) {
+        if (
+          data.Number !== undefined ||
+          data.count !== undefined ||
+          data.strenth !== undefined ||
+          data.strength !== undefined
+        ) {
           handleOOCSI(data)
         }
       } catch (e) {
@@ -198,6 +333,12 @@
     onUpdate,
     updateEmotion,
     handleOOCSI,
+    setHoldActive,
+    setSelectedAvatar,
+    getSelectedAvatar,
+    lockEmotionFromUser,
+    clearEmotionLock,
+    getLockedEmotion,
   }
 
   initOOCSI()

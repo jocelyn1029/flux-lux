@@ -28,6 +28,80 @@
     global.addEventListener('luxEmotionUpdate', () => render(Lux.getState().connected))
   }
 
+  function bindAvatarModal() {
+    const modal = document.getElementById('avatarModal')
+    if (!modal) return
+
+    if (Lux.getSelectedAvatar() != null) {
+      modal.hidden = true
+      return
+    }
+
+    modal.hidden = false
+
+    modal.querySelectorAll('[data-avatar]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const avatar = Number(btn.getAttribute('data-avatar'))
+        Lux.setSelectedAvatar(avatar)
+        modal.hidden = true
+      })
+    })
+  }
+
+  function bindAvatarSwitcher() {
+    const switchBtn = document.getElementById('avatarSwitchBtn')
+    const sheet = document.getElementById('avatarSheet')
+    const currentLabel = document.getElementById('avatarSheetCurrent')
+    if (!switchBtn || !sheet) return
+
+    function renderSheet() {
+      const avatar = Lux.getSelectedAvatar()
+      if (currentLabel) {
+        currentLabel.textContent = avatar
+          ? `Currently: Avatar ${avatar}`
+          : 'Currently: None'
+      }
+      sheet.querySelectorAll('[data-avatar]').forEach((btn) => {
+        const n = Number(btn.getAttribute('data-avatar'))
+        btn.classList.toggle('avatar-sheet__btn--active', n === avatar)
+      })
+    }
+
+    function closeSheet() {
+      sheet.hidden = true
+      switchBtn.setAttribute('aria-expanded', 'false')
+    }
+
+    switchBtn.addEventListener('click', (event) => {
+      event.stopPropagation()
+      if (sheet.hidden) {
+        renderSheet()
+        sheet.hidden = false
+        switchBtn.setAttribute('aria-expanded', 'true')
+      } else {
+        closeSheet()
+      }
+    })
+
+    sheet.querySelectorAll('[data-avatar]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        Lux.setSelectedAvatar(Number(btn.getAttribute('data-avatar')))
+        renderSheet()
+        closeSheet()
+      })
+    })
+
+    document.addEventListener('click', (event) => {
+      if (sheet.hidden) return
+      const target = event.target
+      if (sheet.contains(target) || switchBtn.contains(target)) return
+      closeSheet()
+    })
+
+    global.addEventListener('luxAvatarChange', renderSheet)
+    renderSheet()
+  }
+
   function bindDashboard() {
     const banner = document.getElementById('todayBanner')
     if (!banner) return
@@ -122,7 +196,6 @@
       upset: { label: 'upset', color: '#64B5F6', light: '#BBDEFB' },
     }
 
-    const OUTER = 240
     const INNER_MIN = 48
     const INNER_MAX = 212
 
@@ -132,9 +205,12 @@
     if (!intensityLabelEl) return
 
     let emotionId =
+      Lux.getLockedEmotion() ||
       new URLSearchParams(location.search).get('emotion') ||
       Lux.getState().emotion ||
       'joyful'
+
+    if (EMOTIONS[emotionId]) Lux.lockEmotionFromUser(emotionId)
     let intensity = Lux.getState().intensity
 
     function innerSizeFor(value) {
@@ -145,6 +221,7 @@
       const emotion = EMOTIONS[emotionId] || EMOTIONS.joyful
       const inner = innerSizeFor(intensity)
       const glowStrength = 0.35 + (intensity / 100) * 0.65
+      const displayLevel = intensity >= 100 ? 100 : Math.floor(intensity)
 
       root.style.setProperty('--emotion', emotion.color)
       root.style.setProperty('--emotion-light', emotion.light)
@@ -153,7 +230,7 @@
       if (subtitleEl) {
         subtitleEl.textContent = `Press as hard as you feel ${emotion.label}`
       }
-      intensityLabelEl.textContent = `Intensity: ${intensity}`
+      intensityLabelEl.textContent = `Intensity: ${displayLevel}`
     }
 
     global.LuxIntensityScreen = {
@@ -167,7 +244,9 @@
     }
 
     Lux.onUpdate(({ emotion, intensity: nextIntensity }) => {
-      if (EMOTIONS[emotion]) emotionId = emotion
+      const locked = Lux.getLockedEmotion()
+      if (!locked && EMOTIONS[emotion]) emotionId = emotion
+      else if (locked) emotionId = locked
       intensity = nextIntensity
       applyIntensity()
     })
@@ -196,13 +275,23 @@
   global.LuxOOCSIUI = {
     bindConnectionStatus,
     bindDashboard,
+    bindAvatarModal,
+    bindAvatarSwitcher,
     bindEmotionScreen,
     bindIntensityScreen,
     bindAnalysisScreen,
   }
 
   const page = document.body.dataset.luxPage
-  if (page === 'dashboard') bindDashboard()
+  if (page === 'dashboard') {
+    bindDashboard()
+    bindAvatarModal()
+  }
+  if (page === 'emotion') {
+    bindEmotionScreen()
+    bindAvatarSwitcher()
+    bindConnectionStatus(document.getElementById('oocsiStatus'))
+  }
   if (page === 'intensity') bindIntensityScreen()
   if (page === 'analysis') bindAnalysisScreen()
 })(window)
